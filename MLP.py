@@ -7,48 +7,35 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPRegressor
 
+# PREDICTION OF GLOBAL HORIZONTAL IRRADIANCE using NSRDB Dataset
+
+
 class MLP:
+
     def __init__(self):
-        # Data Extraction
-        self.dataframe = pd.read_excel('C:/Users/HP/Downloads/Sajid/KaggleDataset.xlsx', engine='openpyxl')
+        self.dataframe = pd.read_excel('E:/myCODING/Machine Learning/Solar_Radiation/NSRDB_Ghi.xlsx')
 
     def dataset_inspection(self):
-        # Relevant columns: 3 - 11
-        self.dataset = self.dataframe.iloc[:, 3:12]
+        # DATA OPERATION
+        self.dataset = self.dataframe.iloc[:, 2:7]
+        self.dataset = self.dataset.apply(pd.to_numeric, errors='coerce')
+        self.dataset = self.dataset.dropna()
+        self.dataset = self.dataset.reset_index(drop=True)
+
         print("Displaying first 5 rows of our data set: \n", self.dataset.head())
+        # All but 1st Column
         self.X = self.dataset.iloc[:, 1:].values
+        # 1st Column
         self.y = self.dataset.iloc[:, :1].values
-        # Reshape Label
         self.y = np.array(self.y).reshape(-1, 1)
-        self.radiation = self.dataframe['Radiation']
-        self.temperature = self.dataframe['Temperature']
-        self.humidity = self.dataframe['Humidity']
-        self.pressure = self.dataframe['Pressure']
-        self.speed = self.dataframe['Speed']
-        self.direction = self.dataframe['WindDirection(Degrees)']
+        self.radiation = self.dataframe['GHI (W/m^2)']
 
     def data_set_distribution(self, input):
-        if "temp" in input.lower():
-            self.y_label = self.temperature.values
-            title = 'Histogram of Temperature'
-            xlabel = 'Temperature'
-        elif "rad" in input.lower() or "lab" in input.lower():
-            self.y_label = self.radiation.values
-            title = 'Histogram of Radiation'
-            xlabel = 'Radiation'
-        elif "pres" in input.lower():
-            self.y_label = self.pressure.values
-            title = 'Histogram of Pressure'
-            xlabel = 'Pressure'
-        elif "speed" in input.lower():
-            self.y_label = self.speed.values
-            title = 'Histogram of Speed'
-            xlabel = 'Speed'
-        elif "direc" in input.lower():
-            self.y_label = self.direction.values
-            title = 'Histogram of Wind Direction'
-            xlabel = 'WindDirection'
+        self.y_label = self.radiation.values
+        title = 'Histogram of Radiation'
+        xlabel = 'Radiation'
 
+        # Plot
         plt.hist(self.y_label, bins=10)
         plt.title(title)
         plt.xlabel(xlabel)
@@ -61,7 +48,7 @@ class MLP:
         # Standardization Procedure
         sc_X = StandardScaler()
         sc_y = StandardScaler()
-        X = sc_X.fit_transform(self.X.reshape(-1, 8))
+        X = sc_X.fit_transform(self.X.reshape(-1, 4))
         y = sc_y.fit_transform(self.y.reshape(-1, 1))
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
         regressor = MLPRegressor(hidden_layer_sizes=100, activation='relu', solver='adam', alpha=0.0001,
@@ -69,7 +56,7 @@ class MLP:
                                  shuffle=True, random_state=None, momentum=0.9,)
 
         # MODEL
-        regressor_fit = regressor.fit(X_train.reshape(-1, 8), y_train.reshape(-1, 1))
+        regressor_fit = regressor.fit(X_train.reshape(-1, 4), y_train.reshape(-1, 1))
         y_preds = regressor.predict(X_test)
         y_pred = sc_y.inverse_transform(y_preds)
 
@@ -95,5 +82,5 @@ class MLP:
 
 mlp = MLP()
 mlp.dataset_inspection()
-mlp.data_set_distribution('label')
+mlp.data_set_distribution("label")
 mlp.model()
